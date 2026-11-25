@@ -1,10 +1,10 @@
 {
   "name": "g2g-auth",
   "version": "1.0.0",
-  "description": "Webmail (IMAP kopie) + TOTP authenticator",
+  "description": "Webmail (IMAP copy) + TOTP authenticator",
   "scripts": {
-    "start": "node --disable-warning=ExperimentalWarning src/server.js",
-    "gen-secret": "node -e \"import('./src/totp.js').then(t=>console.log(t.base32Encode(require('crypto').randomBytes(20))))\""
+    "start": "node start.js",
+    "gen-secret": "node -e \"import('./lib/totp.js').then(t=>console.log(t.base32Encode(require('crypto').randomBytes(20))))\""
   },
   "repository": {
     "type": "git",
@@ -17,12 +17,13 @@
   },
   "homepage": "https://github.com/Alwwex/G2G_AUTH#readme",
   "dependencies": {
+    "@libsql/client": "^0.18.0",
     "express": "^5.3.0",
     "imapflow": "^2.12.2",
     "mailparser": "^3.15.0"
   },
   "type": "module",
   "engines": {
-    "node": ">=22.13"
+    "node": ">=20.12"
   }
 }

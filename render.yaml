@@ -1,0 +1,24 @@
+# Render.com free web service. Free instances have no persistent disk -> use Turso (DATABASE_URL).
+services:
+  - type: web
+    name: g2g-auth
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /login.html
+    envVars:
+      - key: TRUST_PROXY
+        value: "1"
+      - key: ADMIN_USER
+        sync: false
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: APP_SECRET
+        sync: false
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_AUTH_TOKEN
+        sync: false
+      - key: CRON_SECRET
+        sync: false

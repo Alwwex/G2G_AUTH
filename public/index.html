@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="cs">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -10,24 +10,24 @@
   <header class="topbar">
     <div class="brand"><span class="logo">🔐</span> G2G Auth</div>
     <nav class="tabs" role="tablist">
-      <button class="tab active" data-view="mail">📬 Pošta</button>
+      <button class="tab active" data-view="mail">📬 Mail</button>
       <button class="tab" data-view="otp">🔑 Authenticator</button>
-      <button class="tab" data-view="accounts">⚙️ Účty</button>
+      <button class="tab" data-view="accounts">⚙️ Mailboxes</button>
     </nav>
-    <button id="logout" class="btn ghost">Odhlásit</button>
+    <button id="logout" class="btn ghost">Sign out</button>
   </header>
 
   <!-- ============ WEBMAIL ============ -->
   <main id="view-mail" class="view">
     <div class="mail-toolbar">
-      <input id="search" type="search" placeholder="Hledat v poště…" />
-      <select id="accountFilter"><option value="">Všechny schránky</option></select>
-      <button id="syncBtn" class="btn">↻ Stáhnout</button>
+      <input id="search" type="search" placeholder="Search mail…" />
+      <select id="accountFilter"><option value="">All mailboxes</option></select>
+      <button id="syncBtn" class="btn">↻ Refresh</button>
     </div>
     <div class="mail-layout">
       <section class="mail-list" id="mailList"></section>
       <section class="mail-view" id="mailView">
-        <div class="empty">Vyber zprávu</div>
+        <div class="empty">Select a message</div>
       </section>
     </div>
     <div class="pager">
@@ -40,46 +40,46 @@
   <!-- ============ AUTHENTICATOR ============ -->
   <main id="view-otp" class="view" hidden>
     <div class="otp-head">
-      <input id="otpSearch" type="search" placeholder="Hledat účet…" />
-      <button id="otpAddBtn" class="btn primary">+ Přidat</button>
+      <input id="otpSearch" type="search" placeholder="Search accounts…" />
+      <button id="otpAddBtn" class="btn primary">+ Add</button>
     </div>
     <form id="otpForm" class="card form-grid" hidden>
-      <h3>Nový 2FA účet</h3>
-      <p class="hint">Vlož <b>secret key</b> (např. z Escape from Tarkov → Profil → Authenticator → „Can't scan?“) nebo celý <code>otpauth://</code> odkaz.</p>
-      <label>Služba<input name="issuer" placeholder="Escape from Tarkov" /></label>
-      <label>Název účtu<input name="name" placeholder="login / e-mail" /></label>
-      <label class="wide">Secret key nebo otpauth://<input name="secret" required placeholder="JBSW Y3DP EHPK 3PXP" autocomplete="off" spellcheck="false" /></label>
+      <h3>New 2FA account</h3>
+      <p class="hint">Paste the <b>secret key</b> (e.g. Escape from Tarkov → Profile → Authenticator → “Can't scan the QR code?”) or a full <code>otpauth://</code> link.</p>
+      <label>Service<input name="issuer" placeholder="Escape from Tarkov" /></label>
+      <label>Account name<input name="name" placeholder="login / email" /></label>
+      <label class="wide">Secret key or otpauth://<input name="secret" required placeholder="JBSW Y3DP EHPK 3PXP" autocomplete="off" spellcheck="false" /></label>
       <details class="wide">
-        <summary>Pokročilé</summary>
+        <summary>Advanced</summary>
         <div class="form-grid">
-          <label>Číslic<select name="digits"><option>6</option><option>7</option><option>8</option></select></label>
-          <label>Perioda (s)<input name="period" type="number" value="30" min="10" max="120" /></label>
-          <label>Algoritmus<select name="algorithm"><option>SHA1</option><option>SHA256</option><option>SHA512</option></select></label>
+          <label>Digits<select name="digits"><option>6</option><option>7</option><option>8</option></select></label>
+          <label>Period (s)<input name="period" type="number" value="30" min="10" max="120" /></label>
+          <label>Algorithm<select name="algorithm"><option>SHA1</option><option>SHA256</option><option>SHA512</option></select></label>
         </div>
       </details>
       <div class="wide row">
-        <button class="btn primary" type="submit">Uložit</button>
-        <button class="btn ghost" type="button" id="otpCancel">Zrušit</button>
+        <button class="btn primary" type="submit">Save</button>
+        <button class="btn ghost" type="button" id="otpCancel">Cancel</button>
         <span class="error" id="otpErr"></span>
       </div>
     </form>
     <div id="otpList" class="otp-grid"></div>
   </main>
 
-  <!-- ============ ÚČTY / IMAP ============ -->
+  <!-- ============ MAILBOXES / IMAP ============ -->
   <main id="view-accounts" class="view" hidden>
     <div id="accList" class="acc-list"></div>
     <form id="accForm" class="card form-grid">
-      <h3>Přidat IMAP schránku</h3>
-      <label>Popisek<input name="label" placeholder="Hlavní mail" /></label>
+      <h3>Add IMAP mailbox</h3>
+      <label>Label<input name="label" placeholder="Main mailbox" /></label>
       <label>IMAP server<input name="host" required placeholder="imap.example.com" /></label>
       <label>Port<input name="port" type="number" value="993" /></label>
       <label class="check"><input name="secure" type="checkbox" checked /> SSL/TLS</label>
-      <label>Uživatel<input name="username" required autocomplete="off" /></label>
-      <label>Heslo<input name="password" type="password" required autocomplete="new-password" /></label>
-      <label class="wide">Složky (čárkou)<input name="folders" value="INBOX" /></label>
+      <label>Username<input name="username" required autocomplete="off" /></label>
+      <label>Password<input name="password" type="password" required autocomplete="new-password" /></label>
+      <label class="wide">Folders (comma separated)<input name="folders" value="INBOX" /></label>
       <div class="wide row">
-        <button class="btn primary" type="submit">Přidat a stáhnout</button>
+        <button class="btn primary" type="submit">Add & sync</button>
         <span id="accMsg"></span>
       </div>
     </form>

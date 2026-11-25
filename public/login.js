@@ -20,5 +20,5 @@ form.addEventListener('submit', async (e) => {
     body: JSON.stringify(body),
   });
   if (r.ok) location.href = '/';
-  else err.textContent = (await r.json().catch(() => ({}))).error || 'Chyba přihlášení';
+  else err.textContent = (await r.json().catch(() => ({}))).error || 'Sign-in failed';
 });

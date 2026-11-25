@@ -37,15 +37,15 @@ async function copy(text) {
     document.execCommand('copy');
     ta.remove();
   }
-  toast('Zkopírováno: ' + text);
+  toast('Copied: ' + text);
 }
 
 function fmtDate(ms) {
   const d = new Date(ms);
   const today = new Date();
   return d.toDateString() === today.toDateString()
-    ? d.toLocaleTimeString('cs-CZ', { hour: '2-digit', minute: '2-digit' })
-    : d.toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric', year: '2-digit' });
+    ? d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: '2-digit' });
 }
 
 // ---------------- tabs ----------------
@@ -72,19 +72,33 @@ async function loadAccountFilter() {
   const sel = $('#accountFilter');
   const cur = sel.value;
   sel.innerHTML =
-    '<option value="">Všechny schránky</option>' +
+    '<option value="">All mailboxes</option>' +
     accs.map((a) => `<option value="${a.id}">${esc(a.label)} (${a.count})</option>`).join('');
   sel.value = cur;
 }
 
-async function loadMail() {
+// On serverless hosts (Vercel) there's no background sync loop, so the open page
+// asks the server to sync mailboxes that haven't been synced recently.
+let staleSyncing = false;
+async function staleSync() {
+  if (staleSyncing) return;
+  staleSyncing = true;
+  try {
+    const r = await api('/api/sync', { method: 'POST', body: { stale: true } });
+    if (Object.values(r).some((x) => x.added)) loadMail(false);
+  } catch {}
+  staleSyncing = false;
+}
+
+async function loadMail(triggerSync = true) {
+  if (triggerSync) staleSync();
   loadAccountFilter();
   const q = $('#search').value;
   const account = $('#accountFilter').value;
   const data = await api(`/api/messages?q=${encodeURIComponent(q)}&account=${account}&page=${page}`);
   const list = $('#mailList');
   if (!data.messages.length) {
-    list.innerHTML = '<div class="empty">Žádné zprávy. Přidej schránku v záložce Účty.</div>';
+    list.innerHTML = '<div class="empty">No messages. Add a mailbox in the Mailboxes tab.</div>';
   } else {
     list.innerHTML = data.messages
       .map(
@@ -99,7 +113,7 @@ async function loadMail() {
       .join('');
   }
   const pages = Math.max(1, Math.ceil(data.total / data.limit));
-  $('#pageInfo').textContent = `${page} / ${pages} · ${data.total} zpráv`;
+  $('#pageInfo').textContent = `${page} / ${pages} · ${data.total} messages`;
   $('#prev').disabled = page <= 1;
   $('#next').disabled = page >= pages;
 }
@@ -130,13 +144,13 @@ async function openMessage(id) {
   v.classList.add('open');
   v.innerHTML = `
     <div class="mv-head">
-      <button class="btn ghost back">‹ Zpět</button>
+      <button class="btn ghost back">‹ Back</button>
       <h2>${esc(m.subject)}</h2>
-      <div class="meta"><b>Od:</b> ${esc(m.from_addr)}</div>
-      <div class="meta"><b>Komu:</b> ${esc(m.to_addr)}</div>
-      <div class="meta"><b>Datum:</b> ${new Date(m.date).toLocaleString('cs-CZ')} · <span class="tag">${esc(m.account)} / ${esc(m.folder)}</span></div>
-      ${codes.length ? `<div class="codes">Nalezené kódy: ${codes.map((c) => `<button class="code-chip" data-code="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}
-      <div class="row"><button class="btn ghost del">🗑 Smazat z webu</button></div>
+      <div class="meta"><b>From:</b> ${esc(m.from_addr)}</div>
+      <div class="meta"><b>To:</b> ${esc(m.to_addr)}</div>
+      <div class="meta"><b>Date:</b> ${new Date(m.date).toLocaleString('en-GB')} · <span class="tag">${esc(m.account)} / ${esc(m.folder)}</span></div>
+      ${codes.length ? `<div class="codes">Detected codes: ${codes.map((c) => `<button class="code-chip" data-code="${esc(c)}">${esc(c)}</button>`).join('')}</div>` : ''}
+      <div class="row"><button class="btn ghost del">🗑 Delete from web</button></div>
     </div>
     <iframe class="mv-body" sandbox="allow-popups allow-popups-to-escape-sandbox" referrerpolicy="no-referrer"></iframe>`;
   const frame = $('.mv-body', v);
@@ -146,9 +160,9 @@ async function openMessage(id) {
   frame.srcdoc = `<!doctype html><meta charset="utf-8"><base target="_blank"><style>body{margin:12px;font-family:system-ui,sans-serif;color:#111;background:#fff}img{max-width:100%;height:auto}</style>${html}`;
   $('.back', v).onclick = () => v.classList.remove('open');
   $('.del', v).onclick = async () => {
-    if (!confirm('Smazat zprávu z webu? (na IMAP serveru zůstane)')) return;
+    if (!confirm('Delete this message from the web app? (It stays on the IMAP server.)')) return;
     await api('/api/messages/' + id, { method: 'DELETE' });
-    v.innerHTML = '<div class="empty">Smazáno</div>';
+    v.innerHTML = '<div class="empty">Deleted</div>';
     v.classList.remove('open');
     loadMail();
   };
@@ -165,16 +179,16 @@ $('#next').onclick = () => (page++, loadMail());
 $('#syncBtn').onclick = async () => {
   const b = $('#syncBtn');
   b.disabled = true;
-  b.textContent = '↻ Stahuji…';
+  b.textContent = '↻ Syncing…';
   try {
     const r = await api('/api/sync', { method: 'POST', body: {} });
     const added = Object.values(r).reduce((s, x) => s + (x.added || 0), 0);
     const errs = Object.values(r).filter((x) => x.error);
-    toast(errs.length ? 'Chyba: ' + errs[0].error : `Nových zpráv: ${added}`);
+    toast(errs.length ? 'Error: ' + errs[0].error : `New messages: ${added}`);
     loadMail();
   } finally {
     b.disabled = false;
-    b.textContent = '↻ Stáhnout';
+    b.textContent = '↻ Refresh';
   }
 };
 
@@ -203,20 +217,20 @@ function renderOtp() {
         <div class="issuer">${esc(o.issuer || '—')}</div>
         <div class="acc">${esc(o.name)}</div>
       </div>
-      <button class="otp-code" data-code="${esc(o.code)}" title="Klikni pro zkopírování">${fmtCode(o.code)}</button>
+      <button class="otp-code" data-code="${esc(o.code)}" title="Click to copy">${fmtCode(o.code)}</button>
       <div class="otp-foot">
         <svg class="ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" class="bg"/><circle cx="18" cy="18" r="15" class="fg"/></svg>
         <span class="secs"></span>
-        <span class="next">další: ${esc(o.next)}</span>
+        <span class="next">next: ${esc(o.next)}</span>
         <span class="spacer"></span>
-        <button class="icon edit" title="Přejmenovat">✏️</button>
-        <button class="icon secret" title="Zobrazit secret">👁</button>
-        <button class="icon del" title="Smazat">🗑</button>
+        <button class="icon edit" title="Rename">✏️</button>
+        <button class="icon secret" title="Show secret">👁</button>
+        <button class="icon del" title="Delete">🗑</button>
       </div>
     </article>`
         )
         .join('')
-    : '<div class="empty">Zatím žádné 2FA účty. Klikni na „+ Přidat“.</div>';
+    : '<div class="empty">No 2FA accounts yet. Click “+ Add”.</div>';
   tickOtp();
 }
 
@@ -258,7 +272,7 @@ $('#otpForm').addEventListener('submit', async (e) => {
     await api('/api/otp', { method: 'POST', body: Object.fromEntries(new FormData(e.target)) });
     e.target.reset();
     e.target.hidden = true;
-    toast('Uloženo');
+    toast('Saved');
     loadOtp();
   } catch (err) {
     $('#otpErr').textContent = err.message;
@@ -272,21 +286,21 @@ $('#otpList').addEventListener('click', async (e) => {
   const o = otpData.find((x) => String(x.id) === id);
   if (e.target.closest('.otp-code')) return copy(o.code);
   if (e.target.closest('.del')) {
-    if (!confirm(`Smazat ${o.issuer} – ${o.name}? Bez secretu se už nepřihlásíš!`)) return;
+    if (!confirm(`Delete ${o.issuer} – ${o.name}? Without the secret you won't be able to log in!`)) return;
     await api('/api/otp/' + id, { method: 'DELETE' });
     return loadOtp();
   }
   if (e.target.closest('.edit')) {
-    const issuer = prompt('Služba', o.issuer);
+    const issuer = prompt('Service', o.issuer);
     if (issuer === null) return;
-    const name = prompt('Název účtu', o.name);
+    const name = prompt('Account name', o.name);
     if (name === null) return;
     await api('/api/otp/' + id, { method: 'PATCH', body: { issuer, name } });
     return loadOtp();
   }
   if (e.target.closest('.secret')) {
     const { secret } = await api(`/api/otp/${id}/secret`);
-    if (confirm(`Secret pro ${o.name}:\n\n${secret}\n\nZkopírovat?`)) copy(secret);
+    if (confirm(`Secret for ${o.name}:\n\n${secret}\n\nCopy it?`)) copy(secret);
   }
 });
 
@@ -299,21 +313,21 @@ async function loadAccounts() {
           (a) => `
     <article class="card acc" data-id="${a.id}">
       <div>
-        <b>${esc(a.label)}</b> <span class="tag">${a.enabled ? 'aktivní' : 'vypnuto'}</span><br/>
-        <small>${esc(a.username)} @ ${esc(a.host)}:${a.port} · složky: ${esc(a.folders)} · ${a.count} zpráv</small><br/>
-        <small>Poslední sync: ${a.last_sync ? new Date(a.last_sync).toLocaleString('cs-CZ') : '—'}</small>
+        <b>${esc(a.label)}</b> <span class="tag">${a.enabled ? 'active' : 'disabled'}</span><br/>
+        <small>${esc(a.username)} @ ${esc(a.host)}:${a.port} · folders: ${esc(a.folders)} · ${a.count} messages</small><br/>
+        <small>Last sync: ${a.last_sync ? new Date(a.last_sync).toLocaleString('en-GB') : '—'}</small>
         ${a.last_error ? `<div class="error">⚠ ${esc(a.last_error)}</div>` : ''}
       </div>
       <div class="row">
         <button class="btn sync">↻ Sync</button>
-        <button class="btn ghost toggle">${a.enabled ? 'Vypnout' : 'Zapnout'}</button>
-        <button class="btn ghost pass">Změnit heslo</button>
-        <button class="btn ghost del">Smazat</button>
+        <button class="btn ghost toggle">${a.enabled ? 'Disable' : 'Enable'}</button>
+        <button class="btn ghost pass">Change password</button>
+        <button class="btn ghost del">Delete</button>
       </div>
     </article>`
         )
         .join('')
-    : '<div class="empty">Zatím žádná schránka.</div>';
+    : '<div class="empty">No mailboxes yet.</div>';
 }
 
 $('#accList').addEventListener('click', async (e) => {
@@ -324,21 +338,21 @@ $('#accList').addEventListener('click', async (e) => {
     if (e.target.closest('.sync')) {
       e.target.disabled = true;
       const r = await api('/api/sync', { method: 'POST', body: { id } });
-      toast(r[id].error ? 'Chyba: ' + r[id].error : `Nových zpráv: ${r[id].added}`);
+      toast(r[id].error ? 'Error: ' + r[id].error : `New messages: ${r[id].added}`);
     } else if (e.target.closest('.toggle')) {
-      const enabled = e.target.textContent.trim() === 'Zapnout';
+      const enabled = e.target.textContent.trim() === 'Enable';
       await api('/api/accounts/' + id, { method: 'PATCH', body: { enabled } });
     } else if (e.target.closest('.pass')) {
-      const password = prompt('Nové heslo k IMAP');
+      const password = prompt('New IMAP password');
       if (!password) return;
       await api('/api/accounts/' + id, { method: 'PATCH', body: { password } });
-      toast('Heslo změněno');
+      toast('Password changed');
     } else if (e.target.closest('.del')) {
-      if (!confirm('Smazat schránku i všechny stažené zprávy z webu?')) return;
+      if (!confirm('Delete this mailbox and all its downloaded messages from the web app?')) return;
       await api('/api/accounts/' + id, { method: 'DELETE' });
     } else return;
   } catch (err) {
-    toast('Chyba: ' + err.message);
+    toast('Error: ' + err.message);
   }
   loadAccounts();
 });
@@ -348,15 +362,15 @@ $('#accForm').addEventListener('submit', async (e) => {
   const f = e.target;
   const body = Object.fromEntries(new FormData(f));
   body.secure = f.secure.checked;
-  $('#accMsg').textContent = 'Připojuji a stahuji…';
+  $('#accMsg').textContent = 'Connecting and syncing…';
   $('#accMsg').className = '';
   try {
     const r = await api('/api/accounts', { method: 'POST', body });
     if (r.result?.error) {
-      $('#accMsg').textContent = 'Uloženo, ale chyba připojení: ' + r.result.error;
+      $('#accMsg').textContent = 'Saved, but connection failed: ' + r.result.error;
       $('#accMsg').className = 'error';
     } else {
-      $('#accMsg').textContent = `Hotovo, staženo ${r.result?.added ?? 0} zpráv.`;
+      $('#accMsg').textContent = `Done, fetched ${r.result?.added ?? 0} messages.`;
       f.reset();
     }
   } catch (err) {
@@ -366,7 +380,7 @@ $('#accForm').addEventListener('submit', async (e) => {
   loadAccounts();
 });
 
-// auto-refresh pošty
+// auto-refresh mail
 setInterval(() => {
   if (!$('#view-mail').hidden) loadMail();
 }, 30000);

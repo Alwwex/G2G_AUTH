@@ -1,18 +1,18 @@
 <!doctype html>
-<html lang="cs">
+<html lang="en">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Přihlášení – G2G Auth</title>
+  <title>Sign in – G2G Auth</title>
   <link rel="stylesheet" href="/style.css" />
 </head>
 <body class="login-page">
   <form id="login" class="card login-card" autocomplete="on">
     <div class="brand"><span class="logo">🔐</span> G2G Auth</div>
-    <label>Uživatel<input name="username" autocomplete="username" required autofocus /></label>
-    <label>Heslo<input name="password" type="password" autocomplete="current-password" required /></label>
-    <label id="codeWrap" hidden>2FA kód<input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" /></label>
-    <button type="submit" class="btn primary">Přihlásit</button>
+    <label>Username<input name="username" autocomplete="username" required autofocus /></label>
+    <label>Password<input name="password" type="password" autocomplete="current-password" required /></label>
+    <label id="codeWrap" hidden>2FA code<input name="code" inputmode="numeric" autocomplete="one-time-code" maxlength="8" /></label>
+    <button type="submit" class="btn primary">Sign in</button>
     <p id="err" class="error" role="alert"></p>
   </form>
   <script src="/login.js"></script>
