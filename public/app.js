@@ -380,6 +380,17 @@ $('#accForm').addEventListener('submit', async (e) => {
   loadAccounts();
 });
 
+// Suggest the default port when SSL is toggled (993 = implicit TLS, 143 = plaintext/STARTTLS)
+function bindPortToggle(secureEl, portEl) {
+  secureEl.addEventListener('change', () => {
+    const v = portEl.value.trim();
+    if (secureEl.checked && (v === '' || v === '143')) portEl.value = '993';
+    if (!secureEl.checked && (v === '' || v === '993')) portEl.value = '143';
+  });
+}
+bindPortToggle($('#impSecure'), $('#impPort'));
+bindPortToggle($('#accForm').secure, $('#accForm').port);
+
 $('#impBtn').onclick = async () => {
   const csv = $('#impCsv').value.trim();
   const host = $('#impHost').value.trim();
