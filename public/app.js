@@ -307,6 +307,11 @@ $('#otpList').addEventListener('click', async (e) => {
 // ---------------- ACCOUNTS ----------------
 async function loadAccounts() {
   const accs = await api('/api/accounts');
+  const failing = accs.filter((a) => a.last_error).length;
+  $('#accCount').textContent = accs.length
+    ? `${accs.length} mailbox${accs.length === 1 ? '' : 'es'}` + (failing ? ` · ${failing} failing` : '')
+    : '';
+  $('#accClear').hidden = accs.length === 0;
   $('#accList').innerHTML = accs.length
     ? accs
         .map(
@@ -356,6 +361,17 @@ $('#accList').addEventListener('click', async (e) => {
   }
   loadAccounts();
 });
+
+$('#accClear').onclick = async () => {
+  if (!confirm('Remove ALL mailboxes and their downloaded messages? This cannot be undone.')) return;
+  try {
+    const r = await api('/api/accounts', { method: 'DELETE' });
+    toast(`Removed ${r.removed} mailboxes`);
+  } catch (e) {
+    toast('Error: ' + e.message);
+  }
+  loadAccounts();
+};
 
 $('#accForm').addEventListener('submit', async (e) => {
   e.preventDefault();

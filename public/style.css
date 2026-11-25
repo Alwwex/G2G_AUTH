@@ -152,6 +152,8 @@ details summary { cursor: pointer; color: var(--muted); }
 details .form-grid { margin: 12px 0 0; }
 
 /* ---------- accounts ---------- */
+.acc-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; }
+.muted { color: var(--muted); font-size: 13px; }
 .acc-list { display: grid; gap: 12px; margin-bottom: 16px; }
 .acc { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 .acc small { color: var(--muted); }
