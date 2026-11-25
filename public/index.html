@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>G2G Auth</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="logo">🔐</span> G2G Auth</div>
+    <nav class="tabs" role="tablist">
+      <button class="tab active" data-view="mail">📬 Pošta</button>
+      <button class="tab" data-view="otp">🔑 Authenticator</button>
+      <button class="tab" data-view="accounts">⚙️ Účty</button>
+    </nav>
+    <button id="logout" class="btn ghost">Odhlásit</button>
+  </header>
+
+  <!-- ============ WEBMAIL ============ -->
+  <main id="view-mail" class="view">
+    <div class="mail-toolbar">
+      <input id="search" type="search" placeholder="Hledat v poště…" />
+      <select id="accountFilter"><option value="">Všechny schránky</option></select>
+      <button id="syncBtn" class="btn">↻ Stáhnout</button>
+    </div>
+    <div class="mail-layout">
+      <section class="mail-list" id="mailList"></section>
+      <section class="mail-view" id="mailView">
+        <div class="empty">Vyber zprávu</div>
+      </section>
+    </div>
+    <div class="pager">
+      <button id="prev" class="btn ghost">‹</button>
+      <span id="pageInfo"></span>
+      <button id="next" class="btn ghost">›</button>
+    </div>
+  </main>
+
+  <!-- ============ AUTHENTICATOR ============ -->
+  <main id="view-otp" class="view" hidden>
+    <div class="otp-head">
+      <input id="otpSearch" type="search" placeholder="Hledat účet…" />
+      <button id="otpAddBtn" class="btn primary">+ Přidat</button>
+    </div>
+    <form id="otpForm" class="card form-grid" hidden>
+      <h3>Nový 2FA účet</h3>
+      <p class="hint">Vlož <b>secret key</b> (např. z Escape from Tarkov → Profil → Authenticator → „Can't scan?“) nebo celý <code>otpauth://</code> odkaz.</p>
+      <label>Služba<input name="issuer" placeholder="Escape from Tarkov" /></label>
+      <label>Název účtu<input name="name" placeholder="login / e-mail" /></label>
+      <label class="wide">Secret key nebo otpauth://<input name="secret" required placeholder="JBSW Y3DP EHPK 3PXP" autocomplete="off" spellcheck="false" /></label>
+      <details class="wide">
+        <summary>Pokročilé</summary>
+        <div class="form-grid">
+          <label>Číslic<select name="digits"><option>6</option><option>7</option><option>8</option></select></label>
+          <label>Perioda (s)<input name="period" type="number" value="30" min="10" max="120" /></label>
+          <label>Algoritmus<select name="algorithm"><option>SHA1</option><option>SHA256</option><option>SHA512</option></select></label>
+        </div>
+      </details>
+      <div class="wide row">
+        <button class="btn primary" type="submit">Uložit</button>
+        <button class="btn ghost" type="button" id="otpCancel">Zrušit</button>
+        <span class="error" id="otpErr"></span>
+      </div>
+    </form>
+    <div id="otpList" class="otp-grid"></div>
+  </main>
+
+  <!-- ============ ÚČTY / IMAP ============ -->
+  <main id="view-accounts" class="view" hidden>
+    <div id="accList" class="acc-list"></div>
+    <form id="accForm" class="card form-grid">
+      <h3>Přidat IMAP schránku</h3>
+      <label>Popisek<input name="label" placeholder="Hlavní mail" /></label>
+      <label>IMAP server<input name="host" required placeholder="imap.example.com" /></label>
+      <label>Port<input name="port" type="number" value="993" /></label>
+      <label class="check"><input name="secure" type="checkbox" checked /> SSL/TLS</label>
+      <label>Uživatel<input name="username" required autocomplete="off" /></label>
+      <label>Heslo<input name="password" type="password" required autocomplete="new-password" /></label>
+      <label class="wide">Složky (čárkou)<input name="folders" value="INBOX" /></label>
+      <div class="wide row">
+        <button class="btn primary" type="submit">Přidat a stáhnout</button>
+        <span id="accMsg"></span>
+      </div>
+    </form>
+  </main>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="/app.js"></script>
+</body>
+</html>

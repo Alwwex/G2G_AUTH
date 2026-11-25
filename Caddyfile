@@ -1,0 +1,4 @@
+# Automatické HTTPS (Let's Encrypt). DNS A záznam taolitakefu.vip musí mířit na tento server.
+taolitakefu.vip {
+	reverse_proxy app:3000
+}
