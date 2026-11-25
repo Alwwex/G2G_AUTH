@@ -89,13 +89,26 @@ cp .env.example .env   # set ADMIN_PASSWORD, APP_SECRET, optionally IMAP_*
 npm start              # http://localhost:3000
 ```
 
+## Logins: admin vs. per-account
+
+There are two kinds of login to the web app:
+
+- **Admin** — the `ADMIN_USER` / `ADMIN_PASSWORD` you set (plus optional 2FA). Sees **everything**:
+  all mailboxes, all mail, manages accounts, bulk import.
+- **Per-account** — each game account logs in with **its email + its own web password** and sees
+  **only its own** inbox, its own 2FA codes, and its own game password. Nothing else.
+
+Set an account's web password in **Mailboxes → (account) → Web login**, or let the bulk import do it:
+the CSV's third column (`game_password`) is stored and also set as that account's web-login password,
+so each account can log in with **email + game password** out of the box. Clear or change it any time.
+
 ## Bulk import mailboxes (CSV)
 
 In the **Mailboxes** tab open **Bulk import mailboxes (CSV)**, set the IMAP server
 (e.g. `mail.taolitakefu.vip`) and paste rows as `email,password` — one per line.
-Extra columns are ignored, so an `email,mail_password,…` export pastes in as-is; only the
-first two columns (email + mailbox password) are used. Re-importing the same email updates
-its password. Imported mailboxes are synced by the normal sync loop / cron afterwards.
+The columns used are `email, mail_password, game_password` (anything after is ignored):
+`mail_password` is the IMAP login used to fetch the mailbox, and `game_password` is stored,
+shown to that account, and set as its web-login password. Re-importing the same email updates it. Imported mailboxes are synced by the normal sync loop / cron afterwards.
 
 With **many mailboxes**, a single always-on server (Option C) is far better than serverless:
 sync runs continuously with limited concurrency (`SYNC_CONCURRENCY`, default 5). On Vercel/Render

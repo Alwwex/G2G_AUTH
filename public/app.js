@@ -48,9 +48,16 @@ function fmtDate(ms) {
     : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'numeric', year: '2-digit' });
 }
 
+// ---------------- role ----------------
+let ME = { admin: true };
+
 // ---------------- tabs ----------------
-const views = { mail: loadMail, otp: loadOtp, accounts: loadAccounts };
+const views = { mail: loadMail, otp: loadOtp, accounts: loadAccounts, account: loadAccount };
 function show(view) {
+  if (views[view] === undefined) view = 'mail';
+  // Guard: account users can't open the admin Mailboxes tab, and vice versa.
+  if (view === 'accounts' && !ME.admin) view = 'mail';
+  if (view === 'account' && ME.admin) view = 'mail';
   document.querySelectorAll('.tab').forEach((t) => t.classList.toggle('active', t.dataset.view === view));
   document.querySelectorAll('.view').forEach((v) => (v.hidden = v.id !== 'view-' + view));
   localStorage.setItem('view', view);
@@ -68,6 +75,7 @@ let currentId = null;
 let searchTimer;
 
 async function loadAccountFilter() {
+  if (!ME.admin) return; // account users have a single mailbox, no filter
   const accs = await api('/api/accounts');
   const sel = $('#accountFilter');
   const cur = sel.value;
@@ -318,7 +326,9 @@ async function loadAccounts() {
           (a) => `
     <article class="card acc" data-id="${a.id}">
       <div>
-        <b>${esc(a.label)}</b> <span class="tag">${a.enabled ? 'active' : 'disabled'}</span><br/>
+        <b>${esc(a.label)}</b> <span class="tag">${a.enabled ? 'active' : 'disabled'}</span>
+        <span class="tag">${a.has_login ? '🔑 can log in' : 'no web login'}</span>
+        ${a.otp_count ? `<span class="tag">🔐 ${a.otp_count} 2FA</span>` : ''}<br/>
         <small>${esc(a.username)} @ ${esc(a.host)}:${a.port} · folders: ${esc(a.folders)} · ${a.count} messages</small><br/>
         <small>Last sync: ${a.last_sync ? new Date(a.last_sync).toLocaleString('en-GB') : '—'}</small>
         ${a.last_error ? `<div class="error">⚠ ${esc(a.last_error)}</div>` : ''}
@@ -326,7 +336,9 @@ async function loadAccounts() {
       <div class="row">
         <button class="btn sync">↻ Sync</button>
         <button class="btn ghost toggle">${a.enabled ? 'Disable' : 'Enable'}</button>
-        <button class="btn ghost pass">Change password</button>
+        <button class="btn ghost pass">IMAP password</button>
+        <button class="btn ghost weblogin">Web login</button>
+        <button class="btn ghost gamepw">Game password</button>
         <button class="btn ghost del">Delete</button>
       </div>
     </article>`
@@ -348,10 +360,21 @@ $('#accList').addEventListener('click', async (e) => {
       const enabled = e.target.textContent.trim() === 'Enable';
       await api('/api/accounts/' + id, { method: 'PATCH', body: { enabled } });
     } else if (e.target.closest('.pass')) {
-      const password = prompt('New IMAP password');
+      const password = prompt('New IMAP password (used to fetch this mailbox)');
       if (!password) return;
       await api('/api/accounts/' + id, { method: 'PATCH', body: { password } });
-      toast('Password changed');
+      toast('IMAP password changed');
+    } else if (e.target.closest('.weblogin')) {
+      const web_password = prompt("Web login password for this account.\nThe account logs into the site with its email + this password.\nLeave empty and confirm to remove its web login.");
+      if (web_password === null) return;
+      await api('/api/accounts/' + id, { method: 'PATCH', body: { web_password } });
+      toast(web_password ? 'Web login set' : 'Web login removed');
+    } else if (e.target.closest('.gamepw')) {
+      const cur = await api(`/api/accounts/${id}/game-password`);
+      const game_password = prompt('Game password (shown to this account):', cur.game_password || '');
+      if (game_password === null) return;
+      await api('/api/accounts/' + id, { method: 'PATCH', body: { game_password } });
+      toast('Game password saved');
     } else if (e.target.closest('.del')) {
       if (!confirm('Delete this mailbox and all its downloaded messages from the web app?')) return;
       await api('/api/accounts/' + id, { method: 'DELETE' });
@@ -439,9 +462,41 @@ $('#impBtn').onclick = async () => {
   $('#impBtn').disabled = false;
 };
 
+// ---------------- MY ACCOUNT (account users) ----------------
+async function loadAccount() {
+  const me = await api('/api/me');
+  $('#myEmail').textContent = me.username || '';
+  $('#gamePwRow').hidden = !me.has_game_password;
+  $('#myGamePw').textContent = '••••••••';
+  $('#revealGamePw').hidden = false;
+  $('#copyGamePw').hidden = true;
+}
+$('#copyEmail').onclick = () => copy($('#myEmail').textContent);
+$('#revealGamePw').onclick = async () => {
+  const me = await api('/api/me');
+  const r = await api(`/api/accounts/${me.account_id}/game-password`);
+  $('#myGamePw').textContent = r.game_password || '(not set)';
+  $('#revealGamePw').hidden = true;
+  $('#copyGamePw').hidden = !r.game_password;
+  $('#copyGamePw').onclick = () => copy(r.game_password);
+};
+
 // auto-refresh mail
 setInterval(() => {
   if (!$('#view-mail').hidden) loadMail();
 }, 30000);
 
-show(localStorage.getItem('view') || 'mail');
+// ---------------- init (role-aware) ----------------
+(async () => {
+  try {
+    ME = await api('/api/me');
+  } catch {
+    ME = { admin: true };
+  }
+  document.querySelectorAll('.admin-only').forEach((el) => (el.hidden = !ME.admin));
+  document.querySelectorAll('.account-only').forEach((el) => (el.hidden = ME.admin));
+  // Account users have one mailbox -> no mailbox filter in the Mail toolbar.
+  $('#accountFilter').hidden = !ME.admin;
+  $('#whoami').textContent = ME.admin ? 'admin' : ME.username || '';
+  show(localStorage.getItem('view') || 'mail');
+})();

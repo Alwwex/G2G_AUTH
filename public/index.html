@@ -12,8 +12,10 @@
     <nav class="tabs" role="tablist">
       <button class="tab active" data-view="mail">📬 Mail</button>
       <button class="tab" data-view="otp">🔑 Authenticator</button>
-      <button class="tab" data-view="accounts">⚙️ Mailboxes</button>
+      <button class="tab admin-only" data-view="accounts" hidden>⚙️ Mailboxes</button>
+      <button class="tab account-only" data-view="account" hidden>👤 My account</button>
     </nav>
+    <span id="whoami" class="muted"></span>
     <button id="logout" class="btn ghost">Sign out</button>
   </header>
 
@@ -106,6 +108,16 @@
         <span id="accMsg"></span>
       </div>
     </form>
+  </main>
+
+  <!-- ============ MY ACCOUNT (account users) ============ -->
+  <main id="view-account" class="view" hidden>
+    <div class="card account-card">
+      <h3>My account</h3>
+      <div class="kv"><span>Email</span><div class="row"><code id="myEmail"></code><button class="btn ghost" id="copyEmail">Copy</button></div></div>
+      <div class="kv" id="gamePwRow"><span>Game password</span><div class="row"><code id="myGamePw">••••••••</code><button class="btn ghost" id="revealGamePw">Show</button><button class="btn ghost" id="copyGamePw" hidden>Copy</button></div></div>
+      <p class="hint">Your email inbox is in the <b>Mail</b> tab, your 2FA codes in the <b>Authenticator</b> tab.</p>
+    </div>
   </main>
 
   <div id="toast" class="toast" hidden></div>
