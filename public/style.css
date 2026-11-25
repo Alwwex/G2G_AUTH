@@ -31,15 +31,20 @@ body {
   font: 14px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
 input, select, button { font: inherit; color: inherit; }
-input, select {
+input, select, textarea {
   background: var(--panel2);
   border: 1px solid var(--border);
   border-radius: 8px;
   padding: 8px 10px;
   width: 100%;
   outline: none;
+  font: inherit;
 }
-input:focus, select:focus { border-color: var(--accent); }
+textarea { resize: vertical; min-height: 90px; }
+input:focus, select:focus, textarea:focus { border-color: var(--accent); }
+.import-box { margin-bottom: 16px; }
+.import-box summary { cursor: pointer; padding: 2px 0; }
+.import-box .form-grid { margin: 14px 0 0; }
 [hidden] { display: none !important; }
 code { background: var(--panel2); padding: 1px 4px; border-radius: 4px; }
 

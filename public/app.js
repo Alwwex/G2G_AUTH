@@ -380,6 +380,38 @@ $('#accForm').addEventListener('submit', async (e) => {
   loadAccounts();
 });
 
+$('#impBtn').onclick = async () => {
+  const csv = $('#impCsv').value.trim();
+  const host = $('#impHost').value.trim();
+  if (!csv) return;
+  if (!host) return (($('#impMsg').textContent = 'Fill in the IMAP server first'), ($('#impMsg').className = 'error'));
+  $('#impMsg').className = '';
+  $('#impMsg').textContent = 'Importing…';
+  $('#impBtn').disabled = true;
+  try {
+    const r = await api('/api/accounts/import', {
+      method: 'POST',
+      body: {
+        csv,
+        host,
+        port: Number($('#impPort').value) || 993,
+        secure: $('#impSecure').checked,
+        folders: $('#impFolders').value.trim() || 'INBOX',
+      },
+    });
+    $('#impMsg').textContent =
+      `Imported ${r.added} new, updated ${r.updated}, skipped ${r.skipped}` +
+      (r.errors.length ? ` · ${r.errors.length} errors (${r.errors[0]})` : '') +
+      '. Mail will be fetched by the next sync.';
+    if (r.added || r.updated) $('#impCsv').value = '';
+    loadAccounts();
+  } catch (err) {
+    $('#impMsg').textContent = 'Error: ' + err.message;
+    $('#impMsg').className = 'error';
+  }
+  $('#impBtn').disabled = false;
+};
+
 // auto-refresh mail
 setInterval(() => {
   if (!$('#view-mail').hidden) loadMail();

@@ -89,6 +89,19 @@ cp .env.example .env   # set ADMIN_PASSWORD, APP_SECRET, optionally IMAP_*
 npm start              # http://localhost:3000
 ```
 
+## Bulk import mailboxes (CSV)
+
+In the **Mailboxes** tab open **Bulk import mailboxes (CSV)**, set the IMAP server
+(e.g. `mail.taolitakefu.vip`) and paste rows as `email,password` — one per line.
+Extra columns are ignored, so an `email,mail_password,…` export pastes in as-is; only the
+first two columns (email + mailbox password) are used. Re-importing the same email updates
+its password. Imported mailboxes are synced by the normal sync loop / cron afterwards.
+
+With **many mailboxes**, a single always-on server (Option C) is far better than serverless:
+sync runs continuously with limited concurrency (`SYNC_CONCURRENCY`, default 5). On Vercel/Render
+use `SYNC_ACCOUNTS_PER_RUN` to cap how many mailboxes each cron run touches (oldest first), and
+call `/api/cron` often enough to rotate through all of them.
+
 ## Escape from Tarkov 2FA
 
 On the EFT website open your profile → enable the Authenticator → under the QR code show the

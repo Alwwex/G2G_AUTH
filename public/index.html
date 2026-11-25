@@ -69,6 +69,28 @@
   <!-- ============ MAILBOXES / IMAP ============ -->
   <main id="view-accounts" class="view" hidden>
     <div id="accList" class="acc-list"></div>
+
+    <details class="card import-box" id="importBox">
+      <summary><b>Bulk import mailboxes (CSV)</b></summary>
+      <div class="form-grid">
+        <p class="hint wide">
+          Paste rows as <code>email,password</code> (one per line). Extra columns are ignored,
+          so an <code>email,mail_password,…</code> export works as-is. Blank lines and a header
+          row are skipped. All imported mailboxes use the IMAP server below; re-importing updates
+          the password of existing ones.
+        </p>
+        <label>IMAP server<input id="impHost" placeholder="mail.taolitakefu.vip" /></label>
+        <label>Port<input id="impPort" type="number" value="993" /></label>
+        <label class="check"><input id="impSecure" type="checkbox" checked /> SSL/TLS</label>
+        <label>Folders (comma separated)<input id="impFolders" value="INBOX" /></label>
+        <label class="wide">CSV<textarea id="impCsv" rows="6" placeholder="user@taolitakefu.vip,password"></textarea></label>
+        <div class="wide row">
+          <button class="btn primary" type="button" id="impBtn">Import</button>
+          <span id="impMsg"></span>
+        </div>
+      </div>
+    </details>
+
     <form id="accForm" class="card form-grid">
       <h3>Add IMAP mailbox</h3>
       <label>Label<input name="label" placeholder="Main mailbox" /></label>
